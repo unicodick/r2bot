@@ -1,11 +1,6 @@
 package config
 
-import (
-	"fmt"
-	"os"
-	"strconv"
-	"strings"
-)
+import "os"
 
 type Config struct {
 	BotToken   string
@@ -19,8 +14,16 @@ type Config struct {
 }
 
 func Load() (*Config, error) {
+	validator := NewValidator()
+
+	allowedIDs, err := validator.LoadAllowedIDs()
+	if err != nil {
+		return nil, err
+	}
+
 	cfg := &Config{
 		BotToken:    os.Getenv("BOT_TOKEN"),
+		AllowedIDs:  allowedIDs,
 		R2AccountID: os.Getenv("R2_ACCOUNT_ID"),
 		R2AccessKey: os.Getenv("R2_ACCESS_KEY"),
 		R2SecretKey: os.Getenv("R2_SECRET_KEY"),
@@ -28,26 +31,8 @@ func Load() (*Config, error) {
 		R2PublicURL: os.Getenv("R2_PUBLIC_URL"),
 	}
 
-	if cfg.BotToken == "" {
-		return nil, fmt.Errorf("BOT_TOKEN is required")
-	}
-
-	allowedIDsStr := os.Getenv("ALLOWED_IDS")
-	if allowedIDsStr == "" {
-		return nil, fmt.Errorf("ALLOWED_IDS is required")
-	}
-
-	ids := strings.Split(allowedIDsStr, ",")
-	for _, idStr := range ids {
-		id, err := strconv.ParseInt(strings.TrimSpace(idStr), 10, 64)
-		if err != nil {
-			return nil, fmt.Errorf("invalid user id: %s", idStr)
-		}
-		cfg.AllowedIDs = append(cfg.AllowedIDs, id)
-	}
-
-	if cfg.R2AccountID == "" || cfg.R2AccessKey == "" || cfg.R2SecretKey == "" || cfg.R2Bucket == "" || cfg.R2PublicURL == "" {
-		return nil, fmt.Errorf("all r2 configuration parameters are required")
+	if err := validator.Validate(cfg); err != nil {
+		return nil, err
 	}
 
 	return cfg, nil

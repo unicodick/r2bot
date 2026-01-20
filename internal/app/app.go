@@ -5,12 +5,15 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/unicodick/r2bot/internal/bot"
+	"github.com/unicodick/r2bot/internal/bot/telegram"
 	"github.com/unicodick/r2bot/internal/config"
-	"github.com/unicodick/r2bot/internal/storage"
+	"github.com/unicodick/r2bot/internal/services"
+	"github.com/unicodick/r2bot/internal/storage/r2"
+	"github.com/unicodick/r2bot/internal/usecase"
 )
 
 type App struct {
-	bot *bot.Bot
+	service *bot.Service
 }
 
 func New() (*App, error) {
@@ -21,26 +24,34 @@ func New() (*App, error) {
 		return nil, err
 	}
 
-	r2Client, err := storage.NewR2Client(
-		cfg.R2AccountID,
-		cfg.R2AccessKey,
-		cfg.R2SecretKey,
-		cfg.R2Bucket,
-		cfg.R2PublicURL,
-	)
+	r2Client, err := r2.NewClient(r2.Config{
+		AccountID: cfg.R2AccountID,
+		AccessKey: cfg.R2AccessKey,
+		SecretKey: cfg.R2SecretKey,
+		Bucket:    cfg.R2Bucket,
+		PublicURL: cfg.R2PublicURL,
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	bot, err := bot.New(cfg, r2Client)
+	api, err := telegram.NewAPI(cfg.BotToken)
 	if err != nil {
 		return nil, err
 	}
 
-	return &App{bot: bot}, nil
+	downloader := services.NewFileDownloader()
+
+	auth := usecase.NewCheckAuth(cfg)
+	downloadTg := usecase.NewDownloadTelegramFile(api.Client(), downloader)
+	upload := usecase.NewUploadFile(r2Client)
+
+	service := bot.NewService(api, auth, downloadTg, upload)
+
+	return &App{service: service}, nil
 }
 
 func (a *App) Run() {
 	log.Println("starting r2bot")
-	a.bot.Start()
+	a.service.Start()
 }

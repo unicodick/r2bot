@@ -1,0 +1,17 @@
+package utils
+
+import "fmt"
+
+// formats file size in bytes to human readable format
+func FormatFileSize(bytes int64) string {
+	const unit = 1024
+	if bytes < unit {
+		return fmt.Sprintf("%d b", bytes)
+	}
+	div, exp := int64(unit), 0
+	for n := bytes / unit; n >= unit; n /= unit {
+		div *= unit
+		exp++
+	}
+	return fmt.Sprintf("%.1f %cb", float64(bytes)/float64(div), "kmgtpe"[exp])
+}
