@@ -1,4 +1,4 @@
-<p aling="center"><a href="https://github.com/unicodick/r2bot">
+<p align="center"><a href="https://github.com/unicodick/r2bot">
  <picture>
    <source srcset=".github/logo.png" />
    <img alt="r2bot" src="https://github.com/unicodick/r2bot" />
