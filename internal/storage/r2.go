@@ -15,6 +15,15 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 )
 
+var httpClient = &http.Client{
+	Timeout: 30 * time.Second,
+	Transport: &http.Transport{
+		MaxIdleConns:       10,
+		IdleConnTimeout:    90 * time.Second,
+		DisableCompression: true,
+	},
+}
+
 type R2Client struct {
 	client    *s3.S3
 	uploader  *s3manager.Uploader
@@ -75,7 +84,7 @@ func (r *R2Client) UploadFile(filename string, reader io.Reader, size int64) (*F
 }
 
 func (r *R2Client) DownloadFile(url string) ([]byte, error) {
-	resp, err := http.Get(url)
+	resp, err := httpClient.Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("failed to download file: %w", err)
 	}

@@ -5,9 +5,19 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
+
+var httpClient = &http.Client{
+	Timeout: 30 * time.Second,
+	Transport: &http.Transport{
+		MaxIdleConns:       10,
+		IdleConnTimeout:    90 * time.Second,
+		DisableCompression: true,
+	},
+}
 
 func (b *Bot) handleMessage(message *tgbotapi.Message) {
 	if message.IsCommand() {
@@ -72,7 +82,7 @@ func (b *Bot) downloadTelegramFile(fileID string) (io.ReadCloser, int64, error) 
 	}
 
 	fileURL := file.Link(b.api.Token)
-	resp, err := http.Get(fileURL)
+	resp, err := httpClient.Get(fileURL)
 	if err != nil {
 		return nil, 0, err
 	}
