@@ -64,5 +64,6 @@ func (h *Handler) handleDocument(message *tgbotapi.Message) {
 	h.api.SendWithButton(message.Chat.ID, text, "✈️", url)
 
 	if err := h.api.DeleteMessage(message.Chat.ID, message.MessageID); err != nil {
+		// intentionally ignored - message deletion is optional cleanup
 	}
 }
