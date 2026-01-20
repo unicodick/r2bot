@@ -34,6 +34,10 @@ func (a *API) SendWithButton(chatID int64, text, buttonText, url string) error {
 	return a.sender.SendWithButton(chatID, text, buttonText, url)
 }
 
+func (a *API) DeleteMessage(chatID int64, messageID int) error {
+	return a.client.Send(tgbotapi.NewDeleteMessage(chatID, messageID))
+}
+
 func (a *API) GetUsername() string {
 	return a.client.GetUsername()
 }

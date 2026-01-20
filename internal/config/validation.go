@@ -41,21 +41,21 @@ func (v *Validator) Validate(cfg *Config) error {
 	return nil
 }
 
-func (v *Validator) LoadAllowedIDs() ([]int64, error) {
+func (v *Validator) LoadAllowedIDs() (map[int64]struct{}, error) {
 	allowedIDsStr := os.Getenv("ALLOWED_IDS")
 	if allowedIDsStr == "" {
-		return []int64{}, nil
+		return make(map[int64]struct{}), nil
 	}
 
 	ids := strings.Split(allowedIDsStr, ",")
-	allowedIDs := make([]int64, 0, len(ids))
+	allowedIDs := make(map[int64]struct{}, len(ids))
 
 	for _, idStr := range ids {
 		id, err := strconv.ParseInt(strings.TrimSpace(idStr), 10, 64)
 		if err != nil {
 			return nil, err
 		}
-		allowedIDs = append(allowedIDs, id)
+		allowedIDs[id] = struct{}{}
 	}
 
 	return allowedIDs, nil

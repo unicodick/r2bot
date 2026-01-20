@@ -3,7 +3,6 @@ package app
 import (
 	"log"
 
-	"github.com/joho/godotenv"
 	"github.com/unicodick/r2bot/internal/bot"
 	"github.com/unicodick/r2bot/internal/bot/telegram"
 	"github.com/unicodick/r2bot/internal/config"
@@ -17,8 +16,6 @@ type App struct {
 }
 
 func New() (*App, error) {
-	godotenv.Load()
-
 	cfg, err := config.Load()
 	if err != nil {
 		return nil, err
