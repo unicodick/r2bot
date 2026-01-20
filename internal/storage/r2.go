@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"net/http"
@@ -13,10 +12,12 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 )
 
 type R2Client struct {
 	client    *s3.S3
+	uploader  *s3manager.Uploader
 	bucket    string
 	publicURL string
 }
@@ -40,31 +41,33 @@ func NewR2Client(accountID, accessKey, secretKey, bucket, publicURL string) (*R2
 	}
 
 	client := s3.New(sess)
+	uploader := s3manager.NewUploaderWithClient(client)
 
 	return &R2Client{
 		client:    client,
+		uploader:  uploader,
 		bucket:    bucket,
 		publicURL: strings.TrimSuffix(publicURL, "/"),
 	}, nil
 }
 
-func (r *R2Client) UploadFile(filename string, data []byte) (*FileInfo, error) {
+func (r *R2Client) UploadFile(filename string, reader io.Reader, size int64) (*FileInfo, error) {
 	key := r.generateKey(filename)
 
-	input := &s3.PutObjectInput{
+	input := &s3manager.UploadInput{
 		Bucket: aws.String(r.bucket),
 		Key:    aws.String(key),
-		Body:   bytes.NewReader(data),
+		Body:   reader,
 	}
 
-	_, err := r.client.PutObject(input)
+	_, err := r.uploader.Upload(input)
 	if err != nil {
 		return nil, fmt.Errorf("failed to upload file: %w", err)
 	}
 
 	fileInfo := &FileInfo{
 		Name: filename,
-		Size: int64(len(data)),
+		Size: size,
 		URL:  fmt.Sprintf("%s/%s", r.publicURL, key),
 	}
 

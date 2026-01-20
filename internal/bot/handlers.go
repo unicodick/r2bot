@@ -36,19 +36,20 @@ func (b *Bot) handleDocument(message *tgbotapi.Message) {
 		return
 	}
 
-	fileData, err := b.downloadTelegramFile(document.FileID)
+	fileReader, fileSize, err := b.downloadTelegramFile(document.FileID)
 	if err != nil {
 		log.Printf("failed to download file: %v", err)
 		b.sendMessage(message.Chat.ID, "failed to upload (dwnld)")
 		return
 	}
+	defer fileReader.Close()
 
 	filename := document.FileName
 	if filename == "" {
 		filename = "file"
 	}
 
-	fileInfo, err := b.r2.UploadFile(filename, fileData)
+	fileInfo, err := b.r2.UploadFile(filename, fileReader, fileSize)
 	if err != nil {
 		log.Printf("failed to upload to r2: %v", err)
 		b.sendMessage(message.Chat.ID, "failed to upload (r2)")
@@ -63,21 +64,20 @@ func (b *Bot) handleDocument(message *tgbotapi.Message) {
 	b.sendMessageWithButton(message.Chat.ID, text, fileInfo.URL)
 }
 
-func (b *Bot) downloadTelegramFile(fileID string) ([]byte, error) {
+func (b *Bot) downloadTelegramFile(fileID string) (io.ReadCloser, int64, error) {
 	fileConfig := tgbotapi.FileConfig{FileID: fileID}
 	file, err := b.api.GetFile(fileConfig)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	fileURL := file.Link(b.api.Token)
 	resp, err := http.Get(fileURL)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	defer resp.Body.Close()
 
-	return io.ReadAll(resp.Body)
+	return resp.Body, resp.ContentLength, nil
 }
 
 func formatFileSize(bytes int64) string {
