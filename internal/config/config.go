@@ -4,7 +4,7 @@ import "os"
 
 type Config struct {
 	BotToken   string
-	AllowedIDs []int64
+	AllowedIDs map[int64]struct{}
 
 	R2AccountID string
 	R2AccessKey string
@@ -39,10 +39,6 @@ func Load() (*Config, error) {
 }
 
 func (c *Config) IsUserAllowed(userID int64) bool {
-	for _, id := range c.AllowedIDs {
-		if id == userID {
-			return true
-		}
-	}
-	return false
+	_, ok := c.AllowedIDs[userID]
+	return ok
 }
