@@ -42,8 +42,9 @@ func New() (*App, error) {
 	auth := usecase.NewCheckAuth(cfg)
 	downloadTg := usecase.NewDownloadTelegramFile(api.Client(), downloader)
 	upload := usecase.NewUploadFile(r2Client)
+	uploadURL := usecase.NewUploadURL(r2Client, downloader)
 
-	service := bot.NewService(api, auth, downloadTg, upload)
+	service := bot.NewService(api, auth, downloadTg, upload, uploadURL)
 
 	return &App{service: service}, nil
 }

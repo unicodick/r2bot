@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"context"
 	"io"
 	"log"
 
@@ -18,8 +19,8 @@ func NewUploadFile(uploader storage.Uploader) *UploadFile {
 	}
 }
 
-func (u *UploadFile) Execute(filename string, reader io.Reader, size int64) (string, string, error) {
-	fileInfo, err := u.uploader.UploadFile(filename, reader, size)
+func (u *UploadFile) Execute(ctx context.Context, filename string, reader io.Reader, size int64) (string, string, error) {
+	fileInfo, err := u.uploader.UploadFile(ctx, filename, reader, size)
 	if err != nil {
 		log.Printf("upload failed: %v", err)
 		return "", "", err
