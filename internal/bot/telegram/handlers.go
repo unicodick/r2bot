@@ -2,6 +2,8 @@ package telegram
 
 import (
 	"context"
+	"path/filepath"
+	"strings"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/unicodick/r2bot/internal/usecase"
@@ -44,6 +46,24 @@ func (h *Handler) handleCommand(message *tgbotapi.Message) {
 	}
 }
 
+func (h *Handler) getFileName(message *tgbotapi.Message) string {
+	if message.Caption != "" {
+		caption := strings.TrimSpace(message.Caption)
+
+		if filepath.Ext(caption) == "" {
+			originalExt := filepath.Ext(message.Document.FileName)
+			if originalExt != "" {
+				caption += originalExt
+			}
+		}
+
+		return caption
+	}
+
+	// fallback
+	return message.Document.FileName
+}
+
 func (h *Handler) handleDocument(message *tgbotapi.Message) {
 	if message.Document.FileSize > 50*1024*1024 {
 		h.api.SendText(message.Chat.ID, "file too big (<50mb)")
@@ -57,7 +77,8 @@ func (h *Handler) handleDocument(message *tgbotapi.Message) {
 	}
 	defer reader.Close()
 
-	text, url, err := h.upload.Execute(context.Background(), message.Document.FileName, reader, size)
+	filename := h.getFileName(message)
+	text, url, err := h.upload.Execute(context.Background(), filename, reader, size)
 	if err != nil {
 		h.api.SendText(message.Chat.ID, "failed to upload file")
 		return
