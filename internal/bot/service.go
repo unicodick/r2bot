@@ -12,8 +12,8 @@ type Service struct {
 	handler *telegram.Handler
 }
 
-func NewService(api *telegram.API, auth *usecase.CheckAuth, downloadTg *usecase.DownloadTelegramFile, upload *usecase.UploadFile) *Service {
-	handler := telegram.NewHandler(api, auth, downloadTg, upload)
+func NewService(api *telegram.API, auth *usecase.CheckAuth, downloadTg *usecase.DownloadTelegramFile, upload *usecase.UploadFile, uploadURL *usecase.UploadURL) *Service {
+	handler := telegram.NewHandler(api, auth, downloadTg, upload, uploadURL)
 
 	return &Service{
 		api:     api,

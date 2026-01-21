@@ -3,6 +3,7 @@ package telegram
 import (
 	"context"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -14,14 +15,16 @@ type Handler struct {
 	auth       *usecase.CheckAuth
 	downloadTg *usecase.DownloadTelegramFile
 	upload     *usecase.UploadFile
+	uploadURL  *usecase.UploadURL
 }
 
-func NewHandler(api *API, auth *usecase.CheckAuth, downloadTg *usecase.DownloadTelegramFile, upload *usecase.UploadFile) *Handler {
+func NewHandler(api *API, auth *usecase.CheckAuth, downloadTg *usecase.DownloadTelegramFile, upload *usecase.UploadFile, uploadURL *usecase.UploadURL) *Handler {
 	return &Handler{
 		api:        api,
 		auth:       auth,
 		downloadTg: downloadTg,
 		upload:     upload,
+		uploadURL:  uploadURL,
 	}
 }
 
@@ -37,12 +40,45 @@ func (h *Handler) HandleMessage(message *tgbotapi.Message) {
 
 	if message.Document != nil {
 		h.handleDocument(message)
+		return
+	}
+
+	// check for url in message
+	if message.Text != "" {
+		h.handleTextMessage(message)
 	}
 }
 
 func (h *Handler) handleCommand(message *tgbotapi.Message) {
 	if message.Command() == "start" {
-		h.api.SendText(message.Chat.ID, "any uploaded file will be stored in r2")
+		h.api.SendText(message.Chat.ID, "any uploaded file will be stored in r2\n\nor you can send direct link for file to upload")
+	}
+}
+
+func (h *Handler) handleTextMessage(message *tgbotapi.Message) {
+	urlRegex := regexp.MustCompile(`https?://[^\s]+`)
+	urls := urlRegex.FindAllString(message.Text, -1)
+
+	if len(urls) == 0 {
+		return
+	}
+
+	// process the first url found
+	url := urls[0]
+	h.handleURL(message, url)
+}
+
+func (h *Handler) handleURL(message *tgbotapi.Message, url string) {
+	text, downloadURL, err := h.uploadURL.Execute(context.Background(), url)
+	if err != nil {
+		h.api.SendText(message.Chat.ID, "failed to upload file from URL: "+err.Error())
+		return
+	}
+
+	h.api.SendWithButton(message.Chat.ID, text, "✈️", downloadURL)
+
+	if err := h.api.DeleteMessage(message.Chat.ID, message.MessageID); err != nil {
+		// intentionally ignored - message deletion is optional cleanup
 	}
 }
 
