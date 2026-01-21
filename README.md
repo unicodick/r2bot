@@ -31,7 +31,7 @@ all configuration is done via environment variables:
 
 - `/start` - show bot info
 - send any file as a document - it will be uploaded to R2
-- send any dircet URL - file will be downloaded and uploaded to R2
+- send any direct URL - file will be downloaded and uploaded to R2
 - receive a public link with a send button
 - custom file names:
   - **with caption**: the caption will be used as the filename
