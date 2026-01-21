@@ -102,7 +102,7 @@ func (h *Handler) getFileName(message *tgbotapi.Message) string {
 
 func (h *Handler) handleDocument(message *tgbotapi.Message) {
 	if message.Document.FileSize > 50*1024*1024 {
-		h.api.SendText(message.Chat.ID, "file too big (<50mb)")
+		h.api.SendText(message.Chat.ID, "file too big (>50MB)")
 		return
 	}
 
