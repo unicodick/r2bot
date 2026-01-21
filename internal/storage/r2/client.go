@@ -1,16 +1,18 @@
 package r2
 
 import (
+	"context"
 	"fmt"
 	"io"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/unicodick/r2bot/internal/storage"
 )
 
 type Client struct {
-	uploader  *s3manager.Uploader
+	uploader  *manager.Uploader
 	bucket    string
 	publicURL string
 	keyGen    *KeyGenerator
@@ -33,13 +35,13 @@ func NewClient(cfg Config) (*Client, error) {
 func (c *Client) UploadFile(filename string, reader io.Reader, size int64) (*storage.FileInfo, error) {
 	key := c.keyGen.Generate(filename)
 
-	input := &s3manager.UploadInput{
+	input := &s3.PutObjectInput{
 		Bucket: aws.String(c.bucket),
 		Key:    aws.String(key),
 		Body:   reader,
 	}
 
-	_, err := c.uploader.Upload(input)
+	_, err := c.uploader.Upload(context.TODO(), input)
 	if err != nil {
 		return nil, fmt.Errorf("upload failed: %w", err)
 	}
