@@ -1,6 +1,8 @@
 package telegram
 
 import (
+	"context"
+
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/unicodick/r2bot/internal/usecase"
 )
@@ -55,7 +57,7 @@ func (h *Handler) handleDocument(message *tgbotapi.Message) {
 	}
 	defer reader.Close()
 
-	text, url, err := h.upload.Execute(message.Document.FileName, reader, size)
+	text, url, err := h.upload.Execute(context.Background(), message.Document.FileName, reader, size)
 	if err != nil {
 		h.api.SendText(message.Chat.ID, "failed to upload file")
 		return
