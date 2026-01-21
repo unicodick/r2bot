@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/url"
 	"path"
-	"strings"
 
 	"github.com/unicodick/r2bot/internal/storage"
 	"github.com/unicodick/r2bot/internal/utils"
@@ -63,14 +62,6 @@ func (u *UploadURL) Execute(ctx context.Context, fileURL string) (string, string
 
 func (u *UploadURL) extractFilename(parsedURL *url.URL) string {
 	filename := path.Base(parsedURL.Path)
-
-	// rm query parameters and fragments
-	if idx := strings.Index(filename, "?"); idx != -1 {
-		filename = filename[:idx]
-	}
-	if idx := strings.Index(filename, "#"); idx != -1 {
-		filename = filename[:idx]
-	}
 
 	if filename == "." || filename == "/" || filename == "" {
 		return ""
