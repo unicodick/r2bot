@@ -19,7 +19,11 @@ type Client struct {
 }
 
 func NewClient(cfg Config) (*Client, error) {
-	_, uploader, err := Session(cfg)
+	return NewClientWithContext(context.Background(), cfg)
+}
+
+func NewClientWithContext(ctx context.Context, cfg Config) (*Client, error) {
+	_, uploader, err := Session(ctx, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -32,7 +36,7 @@ func NewClient(cfg Config) (*Client, error) {
 	}, nil
 }
 
-func (c *Client) UploadFile(filename string, reader io.Reader, size int64) (*storage.FileInfo, error) {
+func (c *Client) UploadFile(ctx context.Context, filename string, reader io.Reader, size int64) (*storage.FileInfo, error) {
 	key := c.keyGen.Generate(filename)
 
 	input := &s3.PutObjectInput{
@@ -41,7 +45,7 @@ func (c *Client) UploadFile(filename string, reader io.Reader, size int64) (*sto
 		Body:   reader,
 	}
 
-	_, err := c.uploader.Upload(context.Background(), input)
+	_, err := c.uploader.Upload(ctx, input)
 	if err != nil {
 		return nil, fmt.Errorf("upload failed: %w", err)
 	}

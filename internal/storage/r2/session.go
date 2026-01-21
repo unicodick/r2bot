@@ -11,7 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
-func Session(cfg Config) (*s3.Client, *manager.Uploader, error) {
+func Session(ctx context.Context, cfg Config) (*s3.Client, *manager.Uploader, error) {
 	endpoint := fmt.Sprintf("https://%s.r2.cloudflarestorage.com", cfg.AccountID)
 
 	customResolver := aws.EndpointResolverWithOptionsFunc(func(service, region string, options ...interface{}) (aws.Endpoint, error) {
@@ -21,7 +21,7 @@ func Session(cfg Config) (*s3.Client, *manager.Uploader, error) {
 		}, nil
 	})
 
-	awsCfg, err := config.LoadDefaultConfig(context.Background(),
+	awsCfg, err := config.LoadDefaultConfig(ctx,
 		config.WithRegion("auto"),
 		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(
 			cfg.AccessKey,
