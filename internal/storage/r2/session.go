@@ -21,7 +21,7 @@ func Session(cfg Config) (*s3.Client, *manager.Uploader, error) {
 		}, nil
 	})
 
-	awsCfg, err := config.LoadDefaultConfig(context.TODO(),
+	awsCfg, err := config.LoadDefaultConfig(context.Background(),
 		config.WithRegion("auto"),
 		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(
 			cfg.AccessKey,

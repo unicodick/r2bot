@@ -41,7 +41,7 @@ func (c *Client) UploadFile(filename string, reader io.Reader, size int64) (*sto
 		Body:   reader,
 	}
 
-	_, err := c.uploader.Upload(context.TODO(), input)
+	_, err := c.uploader.Upload(context.Background(), input)
 	if err != nil {
 		return nil, fmt.Errorf("upload failed: %w", err)
 	}
