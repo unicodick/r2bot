@@ -64,7 +64,7 @@ func (h *Handler) handleTextMessage(message *tgbotapi.Message) {
 	}
 
 	// process the first url found
-	url := urls[0]
+	url := strings.TrimRight(urls[0], ".,!?;:)'\"")
 	h.handleURL(message, url)
 }
 
