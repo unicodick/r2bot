@@ -1,4 +1,4 @@
-package telegram
+package handler
 
 import (
 	telegramapi "github.com/unicodick/r2bot/internal/bot/telegram"
