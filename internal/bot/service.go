@@ -4,16 +4,17 @@ import (
 	"log"
 
 	"github.com/unicodick/r2bot/internal/bot/telegram"
+	telegramhandler "github.com/unicodick/r2bot/internal/bot/telegram/handler"
 	"github.com/unicodick/r2bot/internal/usecase"
 )
 
 type Service struct {
 	api     *telegram.API
-	handler *telegram.Handler
+	handler *telegramhandler.Handler
 }
 
-func NewService(api *telegram.API, auth *usecase.CheckAuth, downloadTg *usecase.DownloadTelegramFile, upload *usecase.UploadFile, uploadURL *usecase.UploadURL) *Service {
-	handler := telegram.NewHandler(api, auth, downloadTg, upload, uploadURL)
+func NewService(api *telegram.API, auth *usecase.CheckAuth, downloadTg *usecase.DownloadTelegramFile, upload *usecase.UploadFile, uploadURL *usecase.UploadURL, uploadArchive *usecase.UploadArchive) *Service {
+	handler := telegramhandler.NewHandler(api, auth, downloadTg, upload, uploadURL, uploadArchive)
 
 	return &Service{
 		api:     api,
