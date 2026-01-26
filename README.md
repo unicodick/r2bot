@@ -40,4 +40,6 @@ all configuration is done via environment variables:
   - **without caption**: falls back to the original filename
 - archiving:
   - files are grouped by MediaGroupID from Telegram
-  - archive name: `files_[timestamp].zip`
+  - archive name:
+    - **with caption**: the caption will be used as the archive name
+    - **without caption**: falls back to `files_[timestamp].zip`
