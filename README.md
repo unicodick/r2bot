@@ -38,3 +38,8 @@ all configuration is done via environment variables:
   - if caption has no extension, the original file extension will be added
   - example: caption `examplenameforfile` + original file `document.pdf` → saved as `examplenameforfile.pdf`
   - **without caption**: falls back to the original filename
+- archiving:
+  - files are grouped by MediaGroupID from Telegram
+  - archive name:
+    - **with caption**: the caption will be used as the archive name
+    - **without caption**: falls back to `files_[timestamp].zip`

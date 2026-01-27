@@ -3,6 +3,7 @@ package app
 import (
 	"log"
 
+	"github.com/unicodick/r2bot/internal/archiver"
 	"github.com/unicodick/r2bot/internal/bot"
 	"github.com/unicodick/r2bot/internal/bot/telegram"
 	"github.com/unicodick/r2bot/internal/config"
@@ -38,13 +39,15 @@ func New() (*App, error) {
 	}
 
 	downloader := services.NewFileDownloader()
+	zipArchiver := archiver.NewZipArchiver()
 
 	auth := usecase.NewCheckAuth(cfg)
 	downloadTg := usecase.NewDownloadTelegramFile(api.Client(), downloader)
 	upload := usecase.NewUploadFile(r2Client)
 	uploadURL := usecase.NewUploadURL(r2Client, downloader)
+	uploadArchive := usecase.NewUploadArchive(r2Client, zipArchiver)
 
-	service := bot.NewService(api, auth, downloadTg, upload, uploadURL)
+	service := bot.NewService(api, auth, downloadTg, upload, uploadURL, uploadArchive)
 
 	return &App{service: service}, nil
 }
