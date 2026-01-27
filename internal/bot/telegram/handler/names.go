@@ -16,7 +16,8 @@ func (h *Handler) generateArchiveName(group *telegramgroup.MediaGroup) string {
 			caption := strings.TrimSpace(file.Message.Caption)
 			if caption != "" {
 				archiveName = h.sanitizeArchiveName(caption)
-				if !strings.HasSuffix(strings.ToLower(archiveName), ".zip") {
+				lowerName := strings.ToLower(archiveName)
+				if !strings.HasSuffix(lowerName, ".zip") {
 					archiveName += ".zip"
 				}
 				break
