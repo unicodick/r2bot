@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/unicodick/r2bot/internal/archiver"
@@ -32,7 +33,7 @@ func (u *UploadArchive) Execute(ctx context.Context, files []archiver.FileData, 
 		archiveName = fmt.Sprintf("archive_%d.zip", time.Now().Unix())
 	}
 
-	if len(archiveName) < 4 || archiveName[len(archiveName)-4:] != ".zip" {
+	if len(archiveName) < 4 || strings.ToLower(archiveName[len(archiveName)-4:]) != ".zip" {
 		archiveName += ".zip"
 	}
 

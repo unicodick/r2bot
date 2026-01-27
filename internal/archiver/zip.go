@@ -2,10 +2,12 @@ package archiver
 
 import (
 	"archive/zip"
-	"bytes"
 	"context"
 	"fmt"
 	"io"
+	"path/filepath"
+	"strconv"
+	"sync"
 )
 
 type ZipArchiver struct{}
@@ -19,39 +21,114 @@ func (z *ZipArchiver) CreateZip(ctx context.Context, files []FileData) (io.Reade
 		return nil, 0, fmt.Errorf("no files provided for archiving")
 	}
 
-	buf := new(bytes.Buffer)
+	pipeReader, pipeWriter := io.Pipe()
 
-	zipWriter := zip.NewWriter(buf)
+	var wg sync.WaitGroup
+	var zipError error
 
-	for _, file := range files {
-		// check if context was cancelled
-		select {
-		case <-ctx.Done():
-			zipWriter.Close()
-			return nil, 0, ctx.Err()
-		default:
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		defer pipeWriter.Close()
+
+		zipWriter := zip.NewWriter(pipeWriter)
+
+		// track used filenames to avoid duplicates
+		usedNames := make(map[string]int)
+
+		for _, file := range files {
+			// check if context was cancelled
+			select {
+			case <-ctx.Done():
+				zipWriter.Close()
+				zipError = ctx.Err()
+				return
+			default:
+			}
+
+			filename := z.getUniqueFilename(file.Name, usedNames)
+
+			zipFile, err := zipWriter.Create(filename)
+			if err != nil {
+				zipWriter.Close()
+				zipError = fmt.Errorf("failed to create file %s in zip: %w", filename, err)
+				return
+			}
+
+			_, err = io.Copy(zipFile, file.Reader)
+			if err != nil {
+				zipWriter.Close()
+				zipError = fmt.Errorf("failed to write file %s to zip: %w", filename, err)
+				return
+			}
 		}
 
-		zipFile, err := zipWriter.Create(file.Name)
+		err := zipWriter.Close()
 		if err != nil {
-			zipWriter.Close()
-			return nil, 0, fmt.Errorf("failed to create file %s in zip: %w", file.Name, err)
+			zipError = fmt.Errorf("failed to finalize zip archive: %w", err)
+			return
 		}
+	}()
 
-		_, err = io.Copy(zipFile, file.Reader)
-		if err != nil {
-			zipWriter.Close()
-			return nil, 0, fmt.Errorf("failed to write file %s to zip: %w", file.Name, err)
+	streamReader := &streamingZipReader{
+		reader: pipeReader,
+		wg:     &wg,
+		err:    &zipError,
+	}
+
+	return streamReader, -1, nil
+}
+
+// wraps the pipe reader and handles goroutine synchronization
+type streamingZipReader struct {
+	reader io.ReadCloser
+	wg     *sync.WaitGroup
+	err    *error
+	once   sync.Once
+}
+
+func (s *streamingZipReader) Read(p []byte) (int, error) {
+	n, err := s.reader.Read(p)
+
+	if err == io.EOF {
+		s.once.Do(func() {
+			s.wg.Wait()
+		})
+
+		if *s.err != nil {
+			return n, *s.err
 		}
 	}
 
-	err := zipWriter.Close()
-	if err != nil {
-		return nil, 0, fmt.Errorf("failed to finalize zip archive: %w", err)
+	return n, err
+}
+
+func (s *streamingZipReader) Close() error {
+	s.once.Do(func() {
+		s.wg.Wait()
+	})
+	return s.reader.Close()
+}
+
+func (z *ZipArchiver) getUniqueFilename(originalName string, usedNames map[string]int) string {
+	if _, exists := usedNames[originalName]; !exists {
+		usedNames[originalName] = 1
+		return originalName
 	}
 
-	size := int64(buf.Len())
-	reader := bytes.NewReader(buf.Bytes())
+	// if the name is used, find a unique variant
+	ext := filepath.Ext(originalName)
+	nameWithoutExt := originalName[:len(originalName)-len(ext)]
 
-	return reader, size, nil
+	counter := usedNames[originalName] + 1
+
+	for {
+		newName := fmt.Sprintf("%s_%s%s", nameWithoutExt, strconv.Itoa(counter), ext)
+		if _, exists := usedNames[newName]; !exists {
+			usedNames[originalName] = counter
+			usedNames[newName] = 1
+			return newName
+		}
+		counter++
+	}
 }
