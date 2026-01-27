@@ -61,7 +61,9 @@ func (mgm *MediaGroupManager) AddFile(message *tgbotapi.Message, fileData archiv
 
 	// reset timer
 	if group.Timer != nil {
-		group.Timer.Stop()
+		if !group.Timer.Stop() {
+			return
+		}
 	}
 
 	group.Timer = time.AfterFunc(mgm.timeout, func() {
@@ -80,10 +82,10 @@ func (mgm *MediaGroupManager) completeGroup(mediaGroupID string) {
 	mgm.mutex.Unlock()
 
 	if group.Timer != nil {
-		group.Timer.Stop()
+		group.Timer = nil
 	}
 
-	mgm.onComplete(group)
+	go mgm.onComplete(group)
 }
 
 func (mgm *MediaGroupManager) GetPendingGroups() int {
