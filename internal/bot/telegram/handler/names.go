@@ -2,6 +2,7 @@ package handler
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -28,16 +29,8 @@ func (h *Handler) generateArchiveName(group *telegramgroup.MediaGroup) string {
 	return archiveName
 }
 
-func (h *Handler) sanitizeArchiveName(name string) string {
-	name = strings.ReplaceAll(name, "/", "_")
-	name = strings.ReplaceAll(name, "\\", "_")
-	name = strings.ReplaceAll(name, ":", "_")
-	name = strings.ReplaceAll(name, "*", "_")
-	name = strings.ReplaceAll(name, "?", "_")
-	name = strings.ReplaceAll(name, "\"", "_")
-	name = strings.ReplaceAll(name, "<", "_")
-	name = strings.ReplaceAll(name, ">", "_")
-	name = strings.ReplaceAll(name, "|", "_")
+var invalidArchiveNameRe = regexp.MustCompile(`[^a-zA-Z0-9_.-]`)
 
-	return name
+func (h *Handler) sanitizeArchiveName(name string) string {
+	return invalidArchiveNameRe.ReplaceAllString(name, "_")
 }
