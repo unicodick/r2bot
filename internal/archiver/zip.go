@@ -56,6 +56,10 @@ func (z *ZipArchiver) CreateZip(ctx context.Context, files []FileData) (io.Reade
 			}
 
 			_, err = io.Copy(zipFile, file.Reader)
+			if closeErr := file.Reader.Close(); closeErr != nil {
+				// log the close error but don't fail the entire operation
+				// the copy error is more critical
+			}
 			if err != nil {
 				zipWriter.Close()
 				zipError = fmt.Errorf("failed to write file %s to zip: %w", filename, err)

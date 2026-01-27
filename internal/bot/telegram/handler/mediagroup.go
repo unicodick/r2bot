@@ -25,6 +25,8 @@ func (h *Handler) handleMediaGroup(group *telegramgroup.MediaGroup) {
 }
 
 func (h *Handler) handleSingleFile(file telegramgroup.MediaGroupFile, chatID int64) {
+	defer file.FileData.Reader.Close()
+
 	text, url, err := h.upload.Execute(context.Background(), file.FileData.Name, file.FileData.Reader, file.FileData.Size)
 	if err != nil {
 		h.api.SendText(chatID, "failed to upload file")
@@ -51,6 +53,9 @@ func (h *Handler) handleMultipleFiles(group *telegramgroup.MediaGroup) {
 
 	text, url, err := h.uploadArchive.Execute(context.Background(), archiveFiles, archiveName)
 	if err != nil {
+		for _, file := range archiveFiles {
+			file.Reader.Close()
+		}
 		h.api.SendText(chatID, "failed to create and upload archive: "+err.Error())
 		return
 	}
